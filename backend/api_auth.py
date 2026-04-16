@@ -32,6 +32,8 @@ def _build_user_response(user: dict) -> dict:
     if user.get("is_vip") and user.get("vip_expire_at"):
         try:
             expire = datetime.fromisoformat(user["vip_expire_at"])
+            if expire.tzinfo is None:
+                expire = expire.replace(tzinfo=timezone.utc)
             is_vip = expire > datetime.now(timezone.utc)
             vip_expire_at = user["vip_expire_at"]
         except ValueError:
@@ -65,7 +67,12 @@ async def register(req: RegisterRequest):
         "success": True,
         "data": {
             "token": token,
-            "user": {"id": user["id"], "email": req.email, "is_vip": False, "vip_expire_at": None},
+            "user": {
+                "id": user["id"],
+                "email": req.email,
+                "is_vip": False,
+                "vip_expire_at": None,
+            },
         },
     }
 

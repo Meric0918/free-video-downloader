@@ -1,0 +1,2 @@
+sqlite3 backend/data/app.db 
+"SELECT id, email, is_vip, vip_expire_at FROM users;"

@@ -44,15 +44,21 @@ def _generate_order_no(user_id: int) -> str:
 
 
 @router.post("/create-checkout")
-async def create_checkout_session(req: CreateCheckoutRequest, user: dict = Depends(get_current_user)):
+async def create_checkout_session(
+    req: CreateCheckoutRequest, user: dict = Depends(get_current_user)
+):
     secret_key = _get_config("STRIPE_SECRET_KEY")
     price_id = _get_config("STRIPE_PRICE_ID_MONTHLY")
     frontend_url = _get_config("FRONTEND_URL", "http://localhost:5173")
 
     if not secret_key:
-        raise HTTPException(status_code=500, detail="支付服务未配置，请设置 STRIPE_SECRET_KEY")
+        raise HTTPException(
+            status_code=500, detail="支付服务未配置，请设置 STRIPE_SECRET_KEY"
+        )
     if not price_id:
-        raise HTTPException(status_code=500, detail="套餐价格未配置，请设置 STRIPE_PRICE_ID_MONTHLY")
+        raise HTTPException(
+            status_code=500, detail="套餐价格未配置，请设置 STRIPE_PRICE_ID_MONTHLY"
+        )
 
     plan = PLANS.get(req.plan_type)
     if not plan:
@@ -78,7 +84,7 @@ async def create_checkout_session(req: CreateCheckoutRequest, user: dict = Depen
                     "quantity": 1,
                 }
             ],
-            mode="payment",
+            mode="subscription",
             success_url=f"{frontend_url}?payment=success&order_no={order_no}",
             cancel_url=f"{frontend_url}?payment=cancel&order_no={order_no}",
             client_reference_id=str(user["id"]),
@@ -116,7 +122,9 @@ async def stripe_webhook(request: Request):
 
     webhook_secret = _get_config("STRIPE_WEBHOOK_SECRET")
     if not webhook_secret:
-        return JSONResponse(status_code=400, content={"error": "Webhook secret not configured"})
+        return JSONResponse(
+            status_code=400, content={"error": "Webhook secret not configured"}
+        )
 
     stripe.api_key = _get_config("STRIPE_SECRET_KEY")
 
@@ -136,7 +144,9 @@ async def stripe_webhook(request: Request):
             if result:
                 print(f"[Payment] Order {result['order_no']} completed successfully")
             else:
-                print(f"[Payment] Session {session['id']} already processed or not found")
+                print(
+                    f"[Payment] Session {session['id']} already processed or not found"
+                )
 
     elif event["type"] == "checkout.session.async_payment_succeeded":
         session = event["data"]["object"]
